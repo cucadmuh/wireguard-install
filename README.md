@@ -1,7 +1,16 @@
 # WireGuard installer
 
-![Lint](https://github.com/angristan/wireguard-install/workflows/Lint/badge.svg)
-[![Say Thanks!](https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg)](https://saythanks.io/to/angristan)
+# My Fork of the angristan/wireguard-install Repository
+
+This repository is a fork of the original wireguard-install repository.
+I've made changes here to enhance functionality and fix issues.
+
+## Changes Made
+
+- Added sending via https://transfer.sh of the client configuration file with a QR code in a password-protected zip archive
+
+
+Next comes the original product description with a modified link for downloading my version.
 
 **This project is a bash script that aims to setup a [WireGuard](https://www.wireguard.com/) VPN on a Linux server, as easily as possible!**
 
@@ -30,7 +39,7 @@ Supported distributions:
 Download and execute the script. Answer the questions asked by the script and it will take care of the rest.
 
 ```bash
-curl -O https://raw.githubusercontent.com/angristan/wireguard-install/master/wireguard-install.sh
+curl -O https://raw.githubusercontent.com/cucadmuh/wireguard-install/master/wireguard-install.sh
 chmod +x wireguard-install.sh
 ./wireguard-install.sh
 ```

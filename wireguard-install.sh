@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Secure WireGuard server installer
-# https://github.com/angristan/wireguard-install
+# https://github.com/cucadmuh/wireguard-install
 
 RED='\033[0;31m'
 ORANGE='\033[0;33m'
@@ -103,7 +103,7 @@ function initialCheck() {
 
 function installQuestions() {
 	echo "Welcome to the WireGuard installer!"
-	echo "The git repository is available at: https://github.com/angristan/wireguard-install"
+	echo "The git repository is available at: https://github.com/cucadmuh/wireguard-install"
 	echo ""
 	echo "I need to ask you a few questions before starting the setup."
 	echo "You can keep the default options and just press enter if you are ok with them."
@@ -173,14 +173,14 @@ function installWireGuard() {
 	# Install WireGuard tools and module
 	if [[ ${OS} == 'ubuntu' ]] || [[ ${OS} == 'debian' && ${VERSION_ID} -gt 10 ]]; then
 		apt-get update
-		apt-get install -y wireguard iptables resolvconf qrencode
+		apt-get install -y wireguard iptables resolvconf qrencode zip
 	elif [[ ${OS} == 'debian' ]]; then
 		if ! grep -rqs "^deb .* buster-backports" /etc/apt/; then
 			echo "deb http://deb.debian.org/debian buster-backports main" >/etc/apt/sources.list.d/backports.list
 			apt-get update
 		fi
 		apt update
-		apt-get install -y iptables resolvconf qrencode
+		apt-get install -y iptables resolvconf qrencode zip
 		apt-get install -y -t buster-backports wireguard
 	elif [[ ${OS} == 'fedora' ]]; then
 		if [[ ${VERSION_ID} -lt 32 ]]; then
@@ -188,22 +188,23 @@ function installWireGuard() {
 			dnf copr enable -y jdoss/wireguard
 			dnf install -y wireguard-dkms
 		fi
-		dnf install -y wireguard-tools iptables qrencode
+		dnf install -y wireguard-tools iptables qrencode zip
 	elif [[ ${OS} == 'centos' ]] || [[ ${OS} == 'almalinux' ]] || [[ ${OS} == 'rocky' ]]; then
 		if [[ ${VERSION_ID} == 8* ]]; then
 			yum install -y epel-release elrepo-release
 			yum install -y kmod-wireguard
 			yum install -y qrencode # not available on release 9
+			yum install -y zip
 		fi
-		yum install -y wireguard-tools iptables
+		yum install -y wireguard-tools iptables zip
 	elif [[ ${OS} == 'oracle' ]]; then
 		dnf install -y oraclelinux-developer-release-el8
 		dnf config-manager --disable -y ol8_developer
 		dnf config-manager --enable -y ol8_developer_UEKR6
 		dnf config-manager --save -y --setopt=ol8_developer_UEKR6.includepkgs='wireguard-tools*'
-		dnf install -y wireguard-tools qrencode iptables
+		dnf install -y wireguard-tools qrencode iptables zip
 	elif [[ ${OS} == 'arch' ]]; then
-		pacman -S --needed --noconfirm wireguard-tools qrencode
+		pacman -S --needed --noconfirm wireguard-tools qrencode zip
 	fi
 
 	# Make sure the directory exists (this does not seem the be the case on fedora)
@@ -378,9 +379,19 @@ AllowedIPs = ${CLIENT_WG_IPV4}/32,${CLIENT_WG_IPV6}/128" >>"/etc/wireguard/${SER
 		echo -e "${GREEN}\nHere is your client config file as a QR Code:\n${NC}"
 		qrencode -t ansiutf8 -l L <"${HOME_DIR}/${SERVER_WG_NIC}-client-${CLIENT_NAME}.conf"
 		echo ""
+		qrencode -l L -o ${HOME_DIR}/${SERVER_WG_NIC}-client-${CLIENT_NAME}.png <"${HOME_DIR}/${SERVER_WG_NIC}-client-${CLIENT_NAME}.conf"
 	fi
 
 	echo -e "${GREEN}Your client config file is in ${HOME_DIR}/${SERVER_WG_NIC}-client-${CLIENT_NAME}.conf${NC}"
+        TO_TRANSFER=${HOME_DIR}/${SERVER_WG_NIC}-client-${CLIENT_NAME}.conf
+        TO_TRANSFER_ZIP="/tmp/${CLIENT_NAME}.zip"
+	RPASS=`echo $RANDOM | md5sum | head -c 8`
+
+	zip -j -P ${RPASS} ${TO_TRANSFER_ZIP} ${TO_TRANSFER} ${HOME_DIR}/${SERVER_WG_NIC}-client-${CLIENT_NAME}.png>/dev/null
+        curl -H "Max-Downloads: 1" -H "Max-Days: 5" --upload-file "${TO_TRANSFER_ZIP}" https://transfer.sh/${CLIENT_NAME}.zip 
+        echo ""
+        echo "PASSWORD: ${RPASS}"
+	rm ${HOME_DIR}/${SERVER_WG_NIC}-client-${CLIENT_NAME}.png
 }
 
 function listClients() {
@@ -485,7 +496,7 @@ function uninstallWg() {
 
 function manageMenu() {
 	echo "Welcome to WireGuard-install!"
-	echo "The git repository is available at: https://github.com/angristan/wireguard-install"
+	echo "The git repository is available at: https://github.com/cucadmuh/wireguard-install"
 	echo ""
 	echo "It looks like WireGuard is already installed."
 	echo ""
